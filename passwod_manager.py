@@ -4,6 +4,8 @@ from getpass import getpass
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from cryptography.fernet import Fernet
+
 
 
 cred = credentials.Certificate("serviceAccountKey.json")
@@ -14,19 +16,36 @@ db = firestore.client()
 collections = []
 logged_in = False
 document_id = -1
+document = ''
+
+def encrypt_user_account_password(password):
+    key = document['key']
+    fernet = Fernet(key)
+    encoded = fernet.encrypt(password.encode())
+    print('encoded')
+    return encoded
+
+
+def decode_user_account_password(encoded):
+    key = document['key']
+    fernet = Fernet(key)
+    decoded = fernet.decrypt(encoded).decode()
+    return decoded
 
 
 def create_user(email, password, name):
     for i in db.collection('users').get():
-        n = i.to_dict()['name']
-        if n == name:
-            print('account already exists')
+        n = i.to_dict()['email']
+        if n == email:
+            print('account already exists to this email')
             return
     hash_pass = hashlib.sha256(password.encode()).hexdigest()
+    key = Fernet.generate_key()
     data = {
         'name':name,
         'email':email,
         'password':hash_pass,
+        'key':key,
     }
     db.collection('users').document().set(data)
     print('account successfully created')
@@ -39,23 +58,25 @@ def login(email,password):
         doc = i.to_dict()
         if doc['email'] == email and doc['password'] == hash_pass:
             logged_in = True
-            return i.id
+            return i.id, doc
             print('You have successfully logged in.')
             return
     print('You have entered a wrong username or password')
-    return -1
+    return -1,''
 
 
 def logout():
     document_id = -1
     logged_in = False
+    doc = ''
 
 
 def add_account(email, password, platform):
+    encoded_password = encrypt_user_account_password(password)
     account = {
         'email': email,
         'platform': platform,
-        'password': password
+        'password': encoded_password,
     }
     db.collection('users').document(document_id).collection('accuonts').document().set(account)
     print('account added')
@@ -69,6 +90,10 @@ def get_account(platform):
             doc=j.to_dict()
             if doc['platform'] == platform:
                 account_list.append(doc)
+    for i in account_list:
+        encoded_pass = i['password']
+        decoded = decode_user_account_password(encoded_pass)
+        i['password'] = decoded
     return account_list
 
 
@@ -90,7 +115,7 @@ while True:
     elif option == 2:
         login_email = input('enter the email: ')
         login_pass = input('enter the password: ')
-        document_id = login(login_email, login_pass)
+        document_id, document = login(login_email, login_pass)
         if document_id == -1:
             continue
         while True:
