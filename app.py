@@ -1,10 +1,10 @@
+from cgitb import text
+from distutils import command
 from tkinter import *
 from functools import partial
 import password_manager
 
 pm = password_manager.PasswordManager()
-
-
 
 
 def validateLogin(email, master_password):
@@ -20,6 +20,12 @@ def validateLogin(email, master_password):
     else:
         print('not logged in')
     return
+
+
+def createAccount(name,email,password):
+    if name.get() != "" and email.get()!= '' and password.get()!='':
+        pm.create_user(email.get(),password.get(),name.get())
+        create_account_window.destroy()
 
 
 def submit():
@@ -48,6 +54,33 @@ tkWindow = Tk()
 app_name = StringVar()
 email_id = StringVar()
 password = StringVar()
+
+
+def create_account():
+    global create_account_window
+    create_account_window = Toplevel(tkWindow)
+    create_account_window.geometry("400x150")
+    create_account_window.title("Create Acc")
+
+    nameLable = Label(create_account_window,text="Name").grid(row=0,column=0)
+    name = StringVar()
+    nameEntry = Entry(create_account_window, textvariable= name).grid(row =0,column=1)
+
+    userEmailLabel = Label(create_account_window, text="User Name").grid(row=1, column=0)
+    userEmail = StringVar()
+    userEmailEntry = Entry(create_account_window, textvariable=userEmail).grid(row=1, column=1)
+
+    # password label and password entry box
+    userPasswordLabel = Label(create_account_window, text="Password").grid(row=2, column=0)
+    user_master_password = StringVar()
+    userPasswordEntry = Entry(create_account_window, textvariable=user_master_password,
+                        show='*').grid(row=2, column=1)
+    createAccountFunction = partial(createAccount,name,userEmail,user_master_password)
+    createAccountButton = Button(create_account_window, text="Create Account",
+                     command=createAccountFunction).grid(row=4, column=0)
+    
+
+    # print('hello there')
 
 
 def open_accounts_window():
@@ -103,5 +136,7 @@ validateLogin = partial(validateLogin, email, master_password)
 # login button
 loginButton = Button(tkWindow, text="Login",
                      command=validateLogin).grid(row=4, column=0)
+registerButton = Button(tkWindow, text="Create Account",
+                        command=create_account).grid(row=4, column=1)
 
 tkWindow.mainloop()
