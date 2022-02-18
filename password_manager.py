@@ -45,14 +45,17 @@ class PasswordManager:
     def encrypt_user_account_password(self, password):
         key = self._document['key']
         fernet = Fernet(key)
+        # print(type(encoded))
         encoded = fernet.encrypt(password.encode())
         print('encoded')
         return encoded
 
     def decode_user_account_password(self, encoded):
         key = self._document['key']
+        print(type(encoded))
+        # encoded = bytes(encoded,'utf-8')
         fernet = Fernet(key)
-        decoded = fernet.decrypt(encoded).decode()
+        decoded = fernet.decrypt(encoded).decode('utf-8')
         return decoded
 
     def create_user(self, email, password, name):
@@ -101,13 +104,12 @@ class PasswordManager:
         print('account added')
         return
 
-    def get_account(self, platform):
+    def get_accounts(self):
         account_list = []
         for i in self._db.collection('users').document(self._document_id).collections():
             for j in i.stream():
                 doc = j.to_dict()
-                if doc['platform'] == platform:
-                    account_list.append(doc)
+                account_list.append(doc)
         for i in account_list:
             encoded_pass = i['password']
             decoded = self.decode_user_account_password(encoded_pass)
