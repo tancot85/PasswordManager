@@ -8,10 +8,16 @@ from cryptography.fernet import Fernet
 
 
 class PasswordManager:
-    _cred = credentials.Certificate("serviceAccountKey.json")
-    firebase_admin.initialize_app(
-        _cred, {'databasURL': "https://passwordmanager-fb698.firebaseio.com"})
-    _db = firestore.client()
+    try:
+
+        _cred = credentials.Certificate("serviceAccountKey.json")
+        firebase_admin.initialize_app(
+            _cred, {'databasURL': "https://passwordmanager-fb698.firebaseio.com"})
+        _db = firestore.client()
+    
+    except:
+        print('Error occured while importing config file')
+    
 
     _collections = []
     _logged_in = False
